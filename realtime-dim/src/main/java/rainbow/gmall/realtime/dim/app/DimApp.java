@@ -33,7 +33,11 @@ import rainbow.realtime.common.constant.Constant;
 import rainbow.realtime.common.util.HBaseUtil;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.*;
 
 /**
  * @author rainbow
@@ -238,9 +242,40 @@ public class DimApp {
         // TODO 10.处理关联后的数据，判读是否为维度数据
 
         SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> dimDS = connectDS.process(
-
-                new BroadcastProcessFunction<JSONObject, TableProcessDim, Tuple2<JSONObject, TableProcessDim>>() // 非广播流，广播流，输出
+                // 非广播流，广播流，输出
+                new BroadcastProcessFunction<JSONObject, TableProcessDim, Tuple2<JSONObject, TableProcessDim>>()
                 {
+
+                    private Map<String, TableProcessDim> configMap = new HashMap<>();
+
+                    @Override
+                    public void open(Configuration parameters) throws Exception {
+                        //将配置表的信息预加载到程序configMap中
+                        Class.forName("com.mysql.cj.jdbc.Driver");
+                        java.sql.Connection conn = DriverManager.getConnection(Constant.MYSQL_URL, Constant.MYSQL_USER_NAME, Constant.MYSQL_PASSWORD);
+                        String sql = "select * from gmall_config.table_process_dim";
+                        PreparedStatement ps = conn.prepareStatement(sql);
+                        ResultSet rs = ps.executeQuery();
+                        ResultSetMetaData metaData = rs.getMetaData();
+                        //handle rs
+                        while (rs.next()) {
+                            //定义一个json对象接受遍历的数据
+                            JSONObject jsonObj = new JSONObject();
+                            for (int i = 1; i <= metaData.getColumnCount(); i++){
+                                String columnName = metaData.getColumnName(i);
+                                Object value = rs.getObject(i);
+                                jsonObj.put(columnName, value);
+                            }
+                            TableProcessDim tableProcessDim = jsonObj.toJavaObject(TableProcessDim.class);
+                            configMap.put(tableProcessDim.getSourceTable(), tableProcessDim);
+
+                        }
+
+                        rs.close();
+                        ps.close();
+                        conn.close();
+
+                    }
 
                     // processElement：处理主流业务数据              根据维度表名，从广播流中获取维度表对象，根据维度表对象，
                     @Override
@@ -256,6 +291,10 @@ public class DimApp {
                             // 如果获取到配置信息则为维度数据，将维度数据向下游传递(只需传递data内容)
                             JSONObject dataJsonObj = jsonObject.getJSONObject("data");
 
+                            //先删除不需要的属性
+                            String sinkColumns = tableProcessDim.getSinkColumns();
+                            deleteNotNeedColumns(dataJsonObj,sinkColumns);
+
                             // 补充操作类型数据
                             String type = jsonObject.getString("type");
                             dataJsonObj.put("type", type);
@@ -265,7 +304,7 @@ public class DimApp {
                         }
                     }
 
-                    // processBroadcastElement：处理广播流配置信息   将配置数据放到广播流中或者从广播状态中删除配置 k：配置表名 v：一个配置对象
+                    // processBroadcastElement：处理广播流配置信息   将配置数据放到广播流中或者从广播状态中删除配置     k：配置表名 v：一个配置对象
                     @Override
                     public void processBroadcastElement(TableProcessDim tableProcessDim,
                                                         BroadcastProcessFunction<JSONObject, TableProcessDim, Tuple2<JSONObject, TableProcessDim>>.Context context,
@@ -274,14 +313,17 @@ public class DimApp {
                         String op = tableProcessDim.getOp();
                         // 获取广播状态
                         BroadcastState<String, TableProcessDim> broadcastState = context.getBroadcastState(mapStateDescriptor);
+
                         if ("d".equals(op)) {
                             // 从配置表删除一条数据，将对象的配置信息删除
-                            broadcastState.remove(tableProcessDim.getSourceTable());
+                            String sourceTable = tableProcessDim.getSourceTable();
+                            broadcastState.remove(sourceTable);
+                            configMap.remove(sourceTable);
 
                         } else {
                             // 添加一条数据，将对象的配置信息添加到广播状态中
                             broadcastState.put(tableProcessDim.getSourceTable(), tableProcessDim);
-
+                            //可有可无 configMap.put(tableProcessDim.getSourceTable(), tableProcessDim);
                         }
                     }
                 }
@@ -290,5 +332,15 @@ public class DimApp {
         // TODO 11.将维度数据同步到HBase中
 
         env.execute();
+    }
+
+    // 删除不需要的属性
+    private static void deleteNotNeedColumns(JSONObject dataJsonObj, String sinkColumns) {
+        List<String> columnList = Arrays.asList(sinkColumns.split(","));
+
+        Set<Map.Entry<String, Object>> entrySet = dataJsonObj.entrySet();
+
+        entrySet.removeIf(next -> !columnList.contains(next.getKey()));
+
     }
 }
