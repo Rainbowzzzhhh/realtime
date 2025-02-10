@@ -1,4 +1,4 @@
-package rainbow.gmall.realtime.dim;
+package rainbow.gmall.realtime.dim.app;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -26,7 +26,6 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
-import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.hbase.client.Connection;
 import rainbow.realtime.common.bean.TableProcessDim;
@@ -236,9 +235,7 @@ public class DimApp {
         // TODO 9.将配置流中的配置信息广播后，广播流和主流进行连接--connect
         BroadcastConnectedStream<JSONObject, TableProcessDim> connectDS = jsonObjDS.connect(broadcastDS);
 
-
         // TODO 10.处理关联后的数据，判读是否为维度数据
-
 
         SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> dimDS = connectDS.process(
 
