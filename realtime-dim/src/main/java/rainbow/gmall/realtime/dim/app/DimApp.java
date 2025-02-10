@@ -26,6 +26,7 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.hbase.client.Connection;
 import rainbow.realtime.common.bean.TableProcessDim;
@@ -240,11 +241,9 @@ public class DimApp {
         BroadcastConnectedStream<JSONObject, TableProcessDim> connectDS = jsonObjDS.connect(broadcastDS);
 
         // TODO 10.处理关联后的数据，判读是否为维度数据
-
         SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> dimDS = connectDS.process(
                 // 非广播流，广播流，输出
-                new BroadcastProcessFunction<JSONObject, TableProcessDim, Tuple2<JSONObject, TableProcessDim>>()
-                {
+                new BroadcastProcessFunction<JSONObject, TableProcessDim, Tuple2<JSONObject, TableProcessDim>>() {
 
                     private Map<String, TableProcessDim> configMap = new HashMap<>();
 
@@ -261,7 +260,7 @@ public class DimApp {
                         while (rs.next()) {
                             //定义一个json对象接受遍历的数据
                             JSONObject jsonObj = new JSONObject();
-                            for (int i = 1; i <= metaData.getColumnCount(); i++){
+                            for (int i = 1; i <= metaData.getColumnCount(); i++) {
                                 String columnName = metaData.getColumnName(i);
                                 Object value = rs.getObject(i);
                                 jsonObj.put(columnName, value);
@@ -286,14 +285,16 @@ public class DimApp {
                         // 获取广播状态
                         ReadOnlyBroadcastState<String, TableProcessDim> broadcastState = readOnlyContext.getBroadcastState(mapStateDescriptor);
                         // 根据表名到广播状态获取配置信息
-                        TableProcessDim tableProcessDim = broadcastState.get(table);
-                        if (tableProcessDim != null) {
+                        TableProcessDim tableProcessDim = null;
+
+                        if ((tableProcessDim = broadcastState.get(table)) != null ||
+                                (tableProcessDim = configMap.get(table)) != null) {
                             // 如果获取到配置信息则为维度数据，将维度数据向下游传递(只需传递data内容)
                             JSONObject dataJsonObj = jsonObject.getJSONObject("data");
 
                             //先删除不需要的属性
                             String sinkColumns = tableProcessDim.getSinkColumns();
-                            deleteNotNeedColumns(dataJsonObj,sinkColumns);
+                            deleteNotNeedColumns(dataJsonObj, sinkColumns);
 
                             // 补充操作类型数据
                             String type = jsonObject.getString("type");
@@ -330,6 +331,23 @@ public class DimApp {
         );
 
         // TODO 11.将维度数据同步到HBase中
+        dimDS.addSink(new SinkFunction<Tuple2<JSONObject, TableProcessDim>>() {
+            //将流数据写入HBASE
+            @Override
+            public void invoke(Tuple2<JSONObject, TableProcessDim> tuple2, Context context) throws Exception {
+                JSONObject jsonObj = tuple2.f0;
+                TableProcessDim tableProcessDim = tuple2.f1;
+                String type = jsonObj.getString("type");
+                jsonObj.remove("type");
+
+                //判断对HBASE操作类型
+                if (type.equals("delete")) {
+
+                } else {
+
+                }
+            }
+        })
 
         env.execute();
     }
