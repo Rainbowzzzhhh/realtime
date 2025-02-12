@@ -26,11 +26,13 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.hbase.client.Connection;
 import rainbow.realtime.common.bean.TableProcessDim;
 import rainbow.realtime.common.constant.Constant;
+import rainbow.realtime.common.util.FlinkSourceUtil;
 import rainbow.realtime.common.util.HBaseUtil;
 
 import java.io.IOException;
@@ -85,31 +87,7 @@ public class DimApp {
         String groupId = "dim_app_group";
 
         // 3.2 创建消费者对象
-        KafkaSource<String> kafkaSource = KafkaSource.<String>builder()
-                .setBootstrapServers(Constant.KAFKA_BROKERS)
-                .setTopics(Constant.TOPIC_DB)
-                .setGroupId(groupId)
-                .setStartingOffsets(OffsetsInitializer.latest())// 从末尾点开始消费    生产环境中为了保证精准一次性，需要手动维护偏移量
-                //.setValueOnlyDeserializer(new SimpleStringSchema())// 使用flink提供的SimpleStringSchema时注意消息不能为空
-                .setValueOnlyDeserializer(new DeserializationSchema<String>() {
-                    @Override
-                    public String deserialize(byte[] message) throws IOException {
-                        if (message != null)
-                            return new String(message);
-                        return null;
-                    }
-
-                    @Override
-                    public boolean isEndOfStream(String nextElement) {
-                        return false;
-                    }
-
-                    @Override
-                    public TypeInformation<String> getProducedType() {
-                        return TypeInformation.of(String.class);
-                    }
-                })
-                .build();
+        KafkaSource<String> kafkaSource = FlinkSourceUtil.getKafkaSource(Constant.TOPIC_DB, groupId);
 
         // 3.3 消费数据 封装为流
         DataStreamSource<String> kafkaStrDS
@@ -331,7 +309,20 @@ public class DimApp {
         );
 
         // TODO 11.将维度数据同步到HBase中
-        dimDS.addSink(new SinkFunction<Tuple2<JSONObject, TableProcessDim>>() {
+        dimDS.addSink(new RichSinkFunction<Tuple2<JSONObject, TableProcessDim>>() {
+
+            private Connection hbaseConn;
+
+            @Override
+            public void open(Configuration parameters) throws Exception {
+                hbaseConn = HBaseUtil.getHBaseConnection();
+            }
+
+            @Override
+            public void close() throws Exception {
+                HBaseUtil.closeHBaseConn(hbaseConn);
+            }
+
             //将流数据写入HBASE
             @Override
             public void invoke(Tuple2<JSONObject, TableProcessDim> tuple2, Context context) throws Exception {
@@ -342,12 +333,14 @@ public class DimApp {
 
                 //判断对HBASE操作类型
                 if (type.equals("delete")) {
-
+                    HBaseUtil.delRow(hbaseConn, Constant.HBASE_NAMESPACE, tableProcessDim.getSinkTable(),
+                            jsonObj.getString(tableProcessDim.getSinkRowKey()));
                 } else {
-
+                    HBaseUtil.putRow(hbaseConn, Constant.HBASE_NAMESPACE, tableProcessDim.getSinkTable(),
+                            jsonObj.getString(tableProcessDim.getSinkRowKey()), tableProcessDim.getSinkFamily(), jsonObj);
                 }
             }
-        })
+        });
 
         env.execute();
     }

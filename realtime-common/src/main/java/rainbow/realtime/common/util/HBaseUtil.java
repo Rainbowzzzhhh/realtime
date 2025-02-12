@@ -1,7 +1,7 @@
 package rainbow.realtime.common.util;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -88,13 +88,13 @@ public class HBaseUtil {
             Put put = new Put(rowKey.getBytes());
             Set<String> columns = jsonObj.keySet();
             for (String column : columns) {
-                String value = jsonObj.getAsString(column);
-                if(StringUtils.isNotEmpty(value)){
+                String value = jsonObj.getString(column);
+                if (StringUtils.isNotEmpty(value)) {
                     put.addColumn(family.getBytes(), column.getBytes(), value.getBytes());
                 }
             }
             table.put(put);
-            log.info("表空间{}下的表{}中put数据成功", nameSpace, tableName);
+            log.info("表空间{}下的表{}中put数据{}成功", nameSpace, tableName, rowKey);
             //System.out.println("表空间" + nameSpace + "下的表" + tableName + "put数据成功");
 
         } catch (IOException e) {
@@ -102,11 +102,11 @@ public class HBaseUtil {
         }
     }
 
-    public static void delRow(Connection hbaseConn, String nameSpace, String tableName, String rowKey){
+    public static void delRow(Connection hbaseConn, String nameSpace, String tableName, String rowKey) {
         TableName tableNameObj = TableName.valueOf(nameSpace, tableName);
         try (Table table = hbaseConn.getTable(tableNameObj);) {
             table.delete(new Delete(rowKey.getBytes()));
-            log.info("表空间{}下的表{}中delete数据成功", nameSpace, tableName);
+            log.info("表空间{}下的表{}中delete数据{}成功", nameSpace, tableName, rowKey);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
