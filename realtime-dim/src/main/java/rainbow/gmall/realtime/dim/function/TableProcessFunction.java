@@ -10,11 +10,9 @@ import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import org.apache.flink.util.Collector;
 import rainbow.realtime.common.bean.TableProcessDim;
 import rainbow.realtime.common.constant.Constant;
+import rainbow.realtime.common.util.JdbcUtil;
 
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
+import java.sql.*;
 import java.util.*;
 
 /**
@@ -36,30 +34,12 @@ public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, T
     @Override
     public void open(Configuration parameters) throws Exception {
         //将配置表的信息预加载到程序configMap中
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        java.sql.Connection conn = DriverManager.getConnection(Constant.MYSQL_URL, Constant.MYSQL_USER_NAME, Constant.MYSQL_PASSWORD);
+        Connection mysqlConnection = JdbcUtil.getMysqlConnection();
         String sql = "select * from gmall_config.table_process_dim";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ResultSet rs = ps.executeQuery();
-        ResultSetMetaData metaData = rs.getMetaData();
-        //handle rs
-        while (rs.next()) {
-            //定义一个json对象接受遍历的数据
-            JSONObject jsonObj = new JSONObject();
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                String columnName = metaData.getColumnName(i);
-                Object value = rs.getObject(i);
-                jsonObj.put(columnName, value);
-            }
-            TableProcessDim tableProcessDim = jsonObj.toJavaObject(TableProcessDim.class);
-            configMap.put(tableProcessDim.getSourceTable(), tableProcessDim);
-
+        List<TableProcessDim> tableProcessDimList= JdbcUtil.queryList(mysqlConnection, sql, TableProcessDim.class, true);
+        for (TableProcessDim tableProcessDim : tableProcessDimList) {
+            configMap.put(tableProcessDim.getSourceTable(),tableProcessDim);
         }
-
-        rs.close();
-        ps.close();
-        conn.close();
-
     }
 
     // processElement：处理主流业务数据              根据维度表名，从广播流中获取维度表对象，根据维度表对象，
