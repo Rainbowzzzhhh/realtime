@@ -7,6 +7,7 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import rainbow.realtime.common.constant.Constant;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class FlinkSourceUtil {
     //获取kafkaSource
     public static KafkaSource<String> getKafkaSource(String topic, String groupId) {
         return KafkaSource.<String>builder()
+                //.setProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed")
                 .setBootstrapServers(Constant.KAFKA_BROKERS)
                 .setTopics(topic)
                 .setGroupId(groupId)
