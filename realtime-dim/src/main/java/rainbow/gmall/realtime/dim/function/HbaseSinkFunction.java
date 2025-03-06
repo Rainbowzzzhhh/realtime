@@ -37,13 +37,14 @@ public class HbaseSinkFunction extends RichSinkFunction<Tuple2<JSONObject, Table
         String type = jsonObj.getString("type");
         jsonObj.remove("type");
 
+        String sinkTable = tableProcessDim.getSinkTable();
+        String rowKey = jsonObj.getString(tableProcessDim.getSinkRowKey());
+
         //判断对HBASE操作类型
         if (type.equals("delete")) {
-            HBaseUtil.delRow(hbaseConn, Constant.HBASE_NAMESPACE, tableProcessDim.getSinkTable(),
-                    jsonObj.getString(tableProcessDim.getSinkRowKey()));
+            HBaseUtil.delRow(hbaseConn, Constant.HBASE_NAMESPACE, sinkTable, rowKey);
         } else {
-            HBaseUtil.putRow(hbaseConn, Constant.HBASE_NAMESPACE, tableProcessDim.getSinkTable(),
-                    jsonObj.getString(tableProcessDim.getSinkRowKey()), tableProcessDim.getSinkFamily(), jsonObj);
+            HBaseUtil.putRow(hbaseConn, Constant.HBASE_NAMESPACE, sinkTable, rowKey, tableProcessDim.getSinkFamily(), jsonObj);
         }
     }
 }

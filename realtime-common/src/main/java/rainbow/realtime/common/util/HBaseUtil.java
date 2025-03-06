@@ -94,8 +94,8 @@ public class HBaseUtil {
                 }
             }
             table.put(put);
-            log.info("表空间{}下的表{}中put数据{}成功", nameSpace, tableName, rowKey);
-            //System.out.println("表空间" + nameSpace + "下的表" + tableName + "put数据成功");
+            //log.info("表空间{}下的表{}中put数据{}成功", nameSpace, tableName, rowKey);
+            System.out.println("表空间" + nameSpace + "下的表" + tableName + "中put数据成功");
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -106,7 +106,9 @@ public class HBaseUtil {
         TableName tableNameObj = TableName.valueOf(nameSpace, tableName);
         try (Table table = hbaseConn.getTable(tableNameObj);) {
             table.delete(new Delete(rowKey.getBytes()));
-            log.info("表空间{}下的表{}中delete数据{}成功", nameSpace, tableName, rowKey);
+            //log.info("表空间{}下的表{}中delete数据{}成功", nameSpace, tableName, rowKey);
+            System.out.println("表空间" + nameSpace + "下的表" + tableName + "中delete数据" + rowKey + "成功");
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
