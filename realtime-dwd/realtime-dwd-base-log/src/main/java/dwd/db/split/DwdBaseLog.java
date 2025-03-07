@@ -1,4 +1,4 @@
-package db.split;
+package dwd.db.split;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
