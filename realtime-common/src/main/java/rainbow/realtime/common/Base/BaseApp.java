@@ -46,28 +46,28 @@ public abstract class BaseApp {
 
         // TODO 2.检查点相关设置
 
-        // 2.1 开启检查点
-        env.enableCheckpointing(5000L, CheckpointingMode.EXACTLY_ONCE);
-
-        // 2.2 设置检查点超时时间
-        env.getCheckpointConfig().setCheckpointTimeout(60000L);
-
-        // 2.3 设置job取消后检查点是否保留
-        env.getCheckpointConfig().setExternalizedCheckpointCleanup(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
-
-        // 2.4 设置两个检查点的最小间隔时间
-        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(2000L);
-
-        // 2.5 设置重启策略
-        // env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 3000L));
-        env.setRestartStrategy(RestartStrategies.failureRateRestart(3, Time.days(30), Time.seconds(3)));
-
-        // 2.6 设置状态后端以及检查点的存储路径
-        env.setStateBackend(new HashMapStateBackend());
-        env.getCheckpointConfig().setCheckpointStorage("hdfs://hadoop102:8020/realtime/ck/" + ckAndGroupId);
-
-        // 2.7 设置操作hadoop用户
-        System.setProperty("HADOOP_USER_NAME", "root");
+//        // 2.1 开启检查点
+//        env.enableCheckpointing(5000L, CheckpointingMode.EXACTLY_ONCE);
+//
+//        // 2.2 设置检查点超时时间
+//        env.getCheckpointConfig().setCheckpointTimeout(60000L);
+//
+//        // 2.3 设置job取消后检查点是否保留
+//        env.getCheckpointConfig().setExternalizedCheckpointCleanup(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+//
+//        // 2.4 设置两个检查点的最小间隔时间
+//        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(2000L);
+//
+//        // 2.5 设置重启策略
+//        // env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 3000L));
+//        env.setRestartStrategy(RestartStrategies.failureRateRestart(3, Time.days(30), Time.seconds(3)));
+//
+//        // 2.6 设置状态后端以及检查点的存储路径
+//        env.setStateBackend(new HashMapStateBackend());
+//        env.getCheckpointConfig().setCheckpointStorage("hdfs://hadoop102:8020/realtime/ck/" + ckAndGroupId);
+//
+//        // 2.7 设置操作hadoop用户
+//        System.setProperty("HADOOP_USER_NAME", "root");
 
         // TODO 3.从Kafka的topic_db读取业务数据，封装为流
         // 3.1 声明消费主题以及消费者组
