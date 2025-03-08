@@ -9,8 +9,7 @@ import rainbow.realtime.common.util.SQLUtil;
 /**
  * @author rainbow
  * @time 2025-03-06 21:44
- * @description
- *      用表名当消费者组名和checkpoint的文件路径
+ * @description 用表名当消费者组名和checkpoint的文件路径
  */
 public class DwdInteractionCommentInfo extends BaseSQLApp {
     public static void main(String[] args) {
@@ -21,22 +20,22 @@ public class DwdInteractionCommentInfo extends BaseSQLApp {
     @Override
     public void handle(StreamTableEnvironment tableEnv) {
         //TODO 3.从kafka的topic_db主题中读取数据 创建动态表   --kafka连接器
-        readOdsDb(tableEnv,Constant.TOPIC_DWD_INTERACTION_COMMENT_INFO);
+        readOdsDb(tableEnv, Constant.TOPIC_DWD_INTERACTION_COMMENT_INFO);
 
         //TODO 4.过滤出评论数据                            --where table = 'comment_info' type = insert
         Table commentInfo = tableEnv.sqlQuery(
                 "   select  " +
-                        "       `data`['id']    id,    " +
-                        "       `data`['user_id']   user_id,  " +
-                        "       `data`['sku_id']    sku_id,    " +
-                        "       `data`['appraise']  appraise,    " +
-                        "       `data`['comment_txt']   comment_txt,  " +
-                        "       ts,     " +
-                        "       proc_time   " +
-                        "    from topic_db  " +
-                        "    where `database`='gmall'   " +
-                        "    and `table`='comment_info'     " +
-                        "    and `type`='insert'    "
+                        "       `data`['id']    id,                     " +
+                        "       `data`['user_id']   user_id,            " +
+                        "       `data`['sku_id']    sku_id,             " +
+                        "       `data`['appraise']  appraise,           " +
+                        "       `data`['comment_txt']   comment_txt,    " +
+                        "        ts,                                    " +
+                        "        pt                                     " +
+                        "    from topic_db                              " +
+                        "    where `database`='gmall'                   " +
+                        "    and `table`='comment_info'                 " +
+                        "    and `type`='insert'                        "
         );
 
         //将表对象注册进表执行环境中
@@ -56,7 +55,7 @@ public class DwdInteractionCommentInfo extends BaseSQLApp {
                         "    c.comment_txt,\n" +
                         "    c.ts\n" +
                         "FROM comment_info AS c\n" +
-                        "JOIN base_dic FOR SYSTEM_TIME AS OF c.proc_time AS dic\n" +
+                        "JOIN base_dic FOR SYSTEM_TIME AS OF c.pt AS dic\n" +
                         "ON c.appraise = dic.dic_code"
         );
 

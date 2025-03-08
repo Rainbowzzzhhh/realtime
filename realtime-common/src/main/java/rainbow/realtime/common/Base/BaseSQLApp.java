@@ -57,13 +57,15 @@ public abstract class BaseSQLApp {
     public void readOdsDb(StreamTableEnvironment tableEnv,String groupId) {
         tableEnv.executeSql(
                 "   CREATE TABLE topic_db (\n" +
-                        "       `database` string,\n" +
-                        "       `table` string,\n" +
-                        "       `type` string,\n" +
-                        "       `ts` bigint,\n" +
-                        "       `data` map<string,string>,\n" +
-                        "       `old` map<string,string>,\n" +
-                        "       proc_time as proctime()\n" +
+                        "       `database` string,                              \n" +
+                        "       `table` string,                                 \n" +
+                        "       `type` string,                                  \n" +
+                        "       `ts` bigint,                                    \n" +
+                        "       `data` map<string,string>,                      \n" +
+                        "       `old` map<string,string>,                       \n" +
+                        "       `pt`  as proctime(),                            \n" +
+                        "       `et`  as to_timestamp_ltz(ts, 0),               \n" +
+                        "        watermark for et as et - interval '3' second   \n" +
                         "   )" + SQLUtil.getKafkaDDL(Constant.TOPIC_DB, groupId)
         );
     }
