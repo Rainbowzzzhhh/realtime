@@ -31,8 +31,8 @@ public abstract class BaseSQLApp {
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
         //TODO 2.检查点相关设置
-//        //2.1 开启检查点
-//        env.enableCheckpointing(5000L, CheckpointingMode.EXACTLY_ONCE);
+        //2.1 开启检查点
+        env.enableCheckpointing(5000L, CheckpointingMode.EXACTLY_ONCE);
 //        //2.2 设置检查点超时时间
 //        env.getCheckpointConfig().setCheckpointTimeout(6000L);
 //        //2.3 设置状态取消后，检查点是否保留
@@ -54,7 +54,7 @@ public abstract class BaseSQLApp {
     public abstract void handle(StreamTableEnvironment tableEnv);
 
     //读取topic_db主题中的数据，创建动态表
-    public void readOdsDb(StreamTableEnvironment tableEnv,String groupId) {
+    public void readOdsDb(StreamTableEnvironment tableEnv, String groupId) {
         tableEnv.executeSql(
                 "   CREATE TABLE topic_db (\n" +
                         "       `database` string,                              \n" +

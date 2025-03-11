@@ -54,6 +54,7 @@ public class DwdBaseLog extends BaseApp {
         //TODO 对新老访客标记进行修复
         SingleOutputStreamOperator<JSONObject> fixedDS = fixedNewAndOld(jsonObjDS);
         //fixedDS.print();
+
         //TODO 分流 错误放到错误测输出流 启动 曝光 动作 ，页面放到主流
         //定义侧输出流标签
         OutputTag<String> errTag = new OutputTag<>("errTag", TypeInformation.of(String.class));
