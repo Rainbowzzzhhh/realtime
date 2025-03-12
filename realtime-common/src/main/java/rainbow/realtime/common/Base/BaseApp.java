@@ -33,7 +33,7 @@ public abstract class BaseApp {
      * @param ckAndGroupId 消费Kafka主题时的消费者组ID和检查点路径的最后一级目录名称，二者取值相同，为Job主程序类名的下划线命名形式。如DimApp的该参数取值为dim_app。
      * @param topic        消费的Kafka主题名称
      */
-    public void start(int port, int parallelism, String ckAndGroupId, String topic) throws Exception {
+    public void start(int port, int parallelism, String ckAndGroupId, String topic) {
         Configuration conf = new Configuration();
         conf.setInteger("rest.port", port);
 
@@ -46,8 +46,8 @@ public abstract class BaseApp {
 
         // TODO 2.检查点相关设置
 
-//        // 2.1 开启检查点
-//        env.enableCheckpointing(5000L, CheckpointingMode.EXACTLY_ONCE);
+        // 2.1 开启检查点
+        env.enableCheckpointing(5000L, CheckpointingMode.EXACTLY_ONCE);
 //
 //        // 2.2 设置检查点超时时间
 //        env.getCheckpointConfig().setCheckpointTimeout(60000L);
@@ -82,7 +82,11 @@ public abstract class BaseApp {
         handle(env, kafkaStrDS);    //模板方法设计模式
 
         // TODO 5.提交作业
-        env.execute();
+        try {
+            env.execute();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public abstract void handle(StreamExecutionEnvironment env, DataStreamSource<String> kafkaStrDS);
