@@ -57,6 +57,13 @@ public class FlinkSinkUtil {
                 .build();
     }
 
+
+    /**
+     * 写入doris表的数据类型为jsonObj<br>
+     * 即:dataStream<JsonObject>.getDorisSink(String table)
+     * @param table
+     * @return  DorisSink<String>
+     */
     public static DorisSink<String> getDorisSink(String table) {
         Properties props = new Properties();
         props.setProperty("format", "json");
