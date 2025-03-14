@@ -16,5 +16,4 @@ public class UserRegisterBean {
     String curDate;
     // 注册用户数
     Long registerCt;
-
 }
