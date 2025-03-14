@@ -74,7 +74,7 @@ public class DwsTrafficVcChArIsNewPageViewWindow extends BaseApp {
                         Long ts = jsonObj.getLong("ts");
                         String curVisitDate = DateFormatUtil.tsToDate(ts);
                         String lastVisitDate = lastVisitDateState.value();
-                        Long uvCt = 0L;
+                        long uvCt = 0L;
                         if (StringUtils.isEmpty(lastVisitDate) || lastVisitDate.equals(curVisitDate)) {
                             uvCt = 1L;
                             lastVisitDateState.update(curVisitDate);
