@@ -89,23 +89,23 @@ public class DwdTradeOrderDetail extends BaseSQLApp {
         //TODO 关联4张表
         Table result = tableEnv.sqlQuery(
                 "select " +
-                        "od.id," +
-                        "od.order_id," +
-                        "oi.user_id," +
-                        "od.sku_id," +
-                        "od.sku_name," +
-                        "oi.province_id," +
-                        "act.activity_id," +
-                        "act.activity_rule_id," +
-                        "cou.coupon_id," +
-                        "date_format(od.create_time, 'yyyy-MM-dd') date_id," +  // 年月日
-                        "od.create_time," +
-                        "od.sku_num," +
-                        "od.split_original_amount," +
-                        "od.split_activity_amount," +
-                        "od.split_coupon_amount," +
-                        "od.split_total_amount," +
-                        "od.ts " +
+                        "   od.id," +
+                        "   od.order_id," +
+                        "   oi.user_id," +
+                        "   od.sku_id," +
+                        "   od.sku_name," +
+                        "   oi.province_id," +
+                        "   act.activity_id," +
+                        "   act.activity_rule_id," +
+                        "   cou.coupon_id," +
+                        "   date_format(od.create_time, 'yyyy-MM-dd') date_id," +  // 年月日
+                        "   od.create_time," +
+                        "   od.sku_num," +
+                        "   od.split_original_amount," +
+                        "   od.split_activity_amount," +
+                        "   od.split_coupon_amount," +
+                        "   od.split_total_amount," +
+                        "   od.ts " +
                         "from order_detail od " +
                         "join order_info oi on od.order_id = oi.id " +
                         "left join order_detail_activity act " +

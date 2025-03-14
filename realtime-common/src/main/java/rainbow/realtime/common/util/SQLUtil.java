@@ -13,7 +13,7 @@ public class SQLUtil {
         return " WITH (\n" +
                 "       'connector' = 'kafka',\n" +
                 "       'topic' = '" + topic + "',\n" +
-                "       'properties.bootstrap.servers' = 'hadoop102:9092',\n" +
+                "       'properties.bootstrap.servers' = 'hadoop102:9092,hadoop103:9092,hadoop104:9092',\n" +
                 "       'properties.group.id' = '" + groupId + "',\n" +
                 "       'scan.startup.mode' = 'latest-offset',\n" +
                 "       'format' = 'json'\n" +

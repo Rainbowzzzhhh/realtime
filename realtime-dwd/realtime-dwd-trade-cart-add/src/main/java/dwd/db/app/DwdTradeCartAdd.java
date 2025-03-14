@@ -14,8 +14,9 @@ import rainbow.realtime.common.util.SQLUtil;
 public class DwdTradeCartAdd extends BaseSQLApp {
 
     public static void main(String[] args) {
-        DwdTradeCartAdd dwdTradeCartAdd = new DwdTradeCartAdd();
-        dwdTradeCartAdd.start(10013, 4, Constant.TOPIC_DWD_TRADE_CART_ADD);
+        new DwdTradeCartAdd().start(
+                10013, 4, Constant.TOPIC_DWD_TRADE_CART_ADD
+        );
     }
 
     @Override

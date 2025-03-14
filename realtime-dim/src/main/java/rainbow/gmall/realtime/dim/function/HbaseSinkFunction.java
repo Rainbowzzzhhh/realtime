@@ -9,6 +9,8 @@ import org.apache.hadoop.hbase.client.Connection;
 import rainbow.realtime.common.bean.TableProcessDim;
 import rainbow.realtime.common.constant.Constant;
 import rainbow.realtime.common.util.HBaseUtil;
+import rainbow.realtime.common.util.RedisUtil;
+import redis.clients.jedis.Jedis;
 
 /**
  * @author rainbow
@@ -18,15 +20,18 @@ import rainbow.realtime.common.util.HBaseUtil;
 public class HbaseSinkFunction extends RichSinkFunction<Tuple2<JSONObject, TableProcessDim>> {
 
     private Connection hbaseConn;
+    private Jedis jedis;
 
     @Override
     public void open(Configuration parameters) throws Exception {
         hbaseConn = HBaseUtil.getHBaseConnection();
+        jedis = RedisUtil.getJedis();
     }
 
     @Override
     public void close() throws Exception {
         HBaseUtil.closeHBaseConn(hbaseConn);
+        RedisUtil.closeJedis(jedis);
     }
 
     //将流数据写入HBASE
@@ -45,6 +50,11 @@ public class HbaseSinkFunction extends RichSinkFunction<Tuple2<JSONObject, Table
             HBaseUtil.delRow(hbaseConn, Constant.HBASE_NAMESPACE, sinkTable, rowKey);
         } else {
             HBaseUtil.putRow(hbaseConn, Constant.HBASE_NAMESPACE, sinkTable, rowKey, tableProcessDim.getSinkFamily(), jsonObj);
+        }
+        //如果维度表数据发生了变化，将redis中缓存的数据清除掉
+        if ("update".equals(type) || "delete".equals(type)) {
+            String key = RedisUtil.getKey(sinkTable, rowKey);
+            jedis.del(key);
         }
     }
 }
