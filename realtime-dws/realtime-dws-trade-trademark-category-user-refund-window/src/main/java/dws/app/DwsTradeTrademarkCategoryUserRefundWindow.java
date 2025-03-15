@@ -24,7 +24,6 @@ import rainbow.realtime.common.util.DateFormatUtil;
 import rainbow.realtime.common.util.FlinkSinkUtil;
 
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +36,8 @@ import java.util.concurrent.TimeUnit;
  * 统计各分组各窗口的订单数和订单金额，
  * 补充与分组无关的维度信息，
  * 将数据写入 Doris 交易域品牌-品类-用户粒度退单各窗口汇总表
+ *
+ * 水位线到了才能触发window的计算，而水位线又是以多条并行度中最小的一个为准
  */
 
 public class DwsTradeTrademarkCategoryUserRefundWindow extends BaseApp {
@@ -50,9 +51,9 @@ public class DwsTradeTrademarkCategoryUserRefundWindow extends BaseApp {
     }
 
     //{"id":"295","user_id":"3131","order_id":"8577","sku_id":"11","province_id":"13",
-// "date_id":"2025-03-08","create_time":"2025-03-08 23:07:46","refund_type_code":"1501",
-// "refund_type_name":"仅退款","refund_reason_type_code":"1301","refund_reason_type_name":"质量问题",
-// "refund_reason_txt":"退款原因具体：0036226899","refund_num":"1","refund_amount":"8197.0","ts":1741442117}
+    // "date_id":"2025-03-08","create_time":"2025-03-08 23:07:46","refund_type_code":"1501",
+    // "refund_type_name":"仅退款","refund_reason_type_code":"1301","refund_reason_type_name":"质量问题",
+    // "refund_reason_txt":"退款原因具体：0036226899","refund_num":"1","refund_amount":"8197.0","ts":1741442117}
     @Override
     public void handle(StreamExecutionEnvironment env, DataStreamSource<String> kafkaStrDS) {
         //2）转换数据结构
