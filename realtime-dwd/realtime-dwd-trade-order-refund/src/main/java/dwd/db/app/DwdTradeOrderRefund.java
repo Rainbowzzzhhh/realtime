@@ -20,7 +20,6 @@ public class DwdTradeOrderRefund extends BaseSQLApp {
                 10017,
                 4,
                 Constant.TOPIC_DWD_TRADE_ORDER_REFUND
-
         );
     }
 
